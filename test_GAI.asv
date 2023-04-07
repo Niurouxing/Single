@@ -1,0 +1,81 @@
+function symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,H,Nv,sym,delta,iterNum,TxSymbol_real)
+
+Px = ones(2*TxAntNum,2*RxAntNum,slen)/slen;
+symp=permute(sym,[2 3 1]);
+x=zeros(2*TxAntNum,1);
+
+t=5;
+k=1;testing=0;err=[];
+while k<=iterNum
+
+    for iter=1:t
+
+        lambda=RxSymbol-H*x;
+        y=H.*x'+lambda/2;
+        x=sum(y.*H,1)'./sum(H.^2,1)';
+
+    end
+    -(x-sym').^2/
+
+    Muz=H.*sum(Px.*symp,3)';
+    sigmaz2=H.^2.*(sum(Px.*symp.^2,3)-sum(Px.*symp,3).^2)';
+
+    Muzji=sum(Muz,2)-Muz;
+    sigmaz2ji=sum(sigmaz2,2)-sigmaz2+Nv;
+
+
+    %TEST
+    temp=(RxSymbol-Muzji-H.*symp).^2;
+    temp2=temp./sigmaz2ji;
+
+    Beta=(2*H.*(RxSymbol-Muzji).*(symp-sym(1))-H.^2.*(symp.^2-sym(1)^2))./(2*sigmaz2ji);
+
+    gamma = squeeze(sum(Beta,1));
+
+    ga=exp(gamma-max(ga,[],2));
+    ga=ga./sum(ga,2);
+    x=ga*sym';
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Alpha = pagetranspose(sum(Beta,1)-Beta);
+
+    Px_new=exp(Alpha-max(Alpha,[],3));
+    Px_new=Px_new./sum(Px_new,3);
+    Px = (1-delta)*Px_new+delta*Px;
+
+
+
+
+    k=k+1;
+
+
+    [~,Indice] = max(gamma,[],2);
+    symest = sym(Indice);
+
+    %  err=symest - TxSymbol_real;
+    %
+    %
+    %     if k>iterNum-1 && sum( symest - TxSymbol_real) >0.001
+    %         testing=1;iterNum=1000;
+    %     end
+    %
+    %     if testing && k==iterNum
+    %         k=1;
+    %         Px = ones(2*TxAntNum,2*RxAntNum,slen)/slen;
+    %     end
+
+end
+
+[~,Indice] = max(gamma,[],2);
+symest = sym(Indice);

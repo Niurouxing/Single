@@ -94,8 +94,8 @@ for nEN =1:length(EbN0db)
         [RxSymbol_c, Nv] = acwgn_EbN0(HMat*TxSymbol, 1, SNR, TxAntNum, RxAntNum, ModType, 1);	% Add Gaussian noise
 
         if (mod(loop,10) == 0)
-            fprintf("\nNow Iter: %d\tNow SNR: %d\tNow Sigma: %f\tNow Error Frame: %d\tNow Error Bits: %d", ...
-                loop, EbN0db(nEN), Nv, error_frame, error_bits);
+            fprintf("\nNow Iter: %d\tNow SNR: %d\tNow FER: %fNow BER: %f\tNow Error Frame: %d\tNow Error Bits: %d", ...
+                loop, EbN0db(nEN), error_frame/loop, error_bits/loop/TxAntNum/ModType, error_frame, error_bits);
         end
 
         % Complex channel matrix to real
@@ -111,7 +111,7 @@ for nEN =1:length(EbN0db)
         %symest = MDPI_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         %symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         %symest = AltMin(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
-        symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
+%         symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
         %symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
@@ -128,13 +128,13 @@ for nEN =1:length(EbN0db)
 
 
         % QR for K_BEST
-%         [bQ, bR] = qr(Hreal);
-%         R = bR(1:2*TxAntNum, :);
-%         Q = bQ(:, 1:2*TxAntNum);
-%         z = Q' * RxSymbol;
+        [bQ, bR] = qr(Hreal);
+        R = bR(1:2*TxAntNum, :);
+        Q = bQ(:, 1:2*TxAntNum);
+        z = Q' * RxSymbol;
 
 %          [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
-       %symest=K_Best(R, sym', z,32);
+       symest=K_Best(R, sym', z,8);
 
         % 用那个祖传格雷码的时候用这4行
         %         [~,indiceest]=min(abs(sym'-symest),[],2);
@@ -147,7 +147,7 @@ for nEN =1:length(EbN0db)
         TxBits_est=qamdemod(RxSymbol_est,QAM,"gray","OutputType","bit","UnitAveragePower",true);
 
         err=nnz(TxBits_est-TxBits);
-        if err~=0
+       
             H_error=cat(3,H_error,Hreal);
             Tx_error=[Tx_error,TxSymbol_real];
             Rx_error=[Rx_error,RxSymbol];
@@ -155,7 +155,7 @@ for nEN =1:length(EbN0db)
             matlabEst=[matlabEst,(Hreal'*Hreal+Nv*eye(2*TxAntNum)) \ Hreal'*RxSymbol];
 
 
-        end
+        
 
         
         error_bits = error_bits + err;

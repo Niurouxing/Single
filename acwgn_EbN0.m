@@ -33,7 +33,6 @@ TxE = Es*Nr*Nt;
 
 % noise variance
 sigma2 = TxE/(10^(SNR/10)*Mc*FECRate*Nt);
-% sigma2 = 0.0004;
 
 % output of the AWGN channel
 RxSig = TxSig + sqrt(sigma2/2)*(randn(size(TxSig))+1i*randn(size(TxSig)));

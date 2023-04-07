@@ -59,7 +59,7 @@ H_error=[];
 Tx_error=[];
 bitsNum_error=[];
 Rx_error=[];
-
+matlabEst=[];
 tic
 for nEN =1:length(EbN0db)
 
@@ -152,7 +152,7 @@ for nEN =1:length(EbN0db)
             Tx_error=[Tx_error,TxSymbol_real];
             Rx_error=[Rx_error,RxSymbol];
             bitsNum_error=[bitsNum_error;err];
-            mstlanEst=(H'*H+Nv*eye(2*TxAntNum)) \ H'*RxSymbol
+            matlabEst=[matlabEst,(Hreal'*Hreal+Nv*eye(2*TxAntNum)) \ Hreal'*RxSymbol];
 
 
         end
@@ -174,4 +174,4 @@ writeNPY(H_error,"./npy-matlab/H_error.npy")
 writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
 writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")
 writeNPY(bitsNum_error,"./npy-matlab/bitsNum_error.npy")
-
+writeNPY(matlabEst,"./npy-matlab/matlabEst.npy")

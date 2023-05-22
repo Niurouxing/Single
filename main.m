@@ -6,7 +6,7 @@ rand('state',114514);
 randn('state',114514);
 
 % profile on;
-EbN0db      =18:3:18;
+EbN0db      =1000:3:1800;
 SampleNum   = Inf;       % max sample no.
 delta       = 0.55; %0.55;          % damping factor
 isCorr = 0;
@@ -77,8 +77,8 @@ for nEN =1:length(EbN0db)
         loop = loop + 1;
 
         TxBits = randi([0, 1], [InfoLen, 1]);
-        %TxSymbol = GrayMapQAM(TxBits', ModType).';
-        TxSymbol=qammod(TxBits,QAM,"gray",'UnitAveragePower',true,'InputType','bit');
+        TxSymbol = GrayMapQAM(TxBits', ModType).';
+        % TxSymbol=qammod(TxBits,QAM,"gray",'UnitAveragePower',true,'InputType','bit');
         TxSymbol_real=[real(TxSymbol); imag(TxSymbol)];
         % Channel Matrix
         if isCorr
@@ -111,7 +111,9 @@ for nEN =1:length(EbN0db)
         %symest = MDPI_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         %symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         %symest = AltMin(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
-%         symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+
+        symest = fista(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
 
         %symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
@@ -128,23 +130,23 @@ for nEN =1:length(EbN0db)
 
 
         % QR for K_BEST
-        [bQ, bR] = qr(Hreal);
-        R = bR(1:2*TxAntNum, :);
-        Q = bQ(:, 1:2*TxAntNum);
-        z = Q' * RxSymbol;
+        % [bQ, bR] = qr(Hreal);
+        % R = bR(1:2*TxAntNum, :);
+        % Q = bQ(:, 1:2*TxAntNum);
+        % z = Q' * RxSymbol;
 
 %          [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
-       symest=K_Best(R, sym', z,8);
+       % symest=K_Best(R, sym', z,8);
 
         % 用那个祖传格雷码的时候用这4行
-        %         [~,indiceest]=min(abs(sym'-symest),[],2);
-        %         TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
-        %         TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
-        %         TxBits_est=TxBits_est(:);
+                [~,indiceest]=min(abs(sym'-symest),[],2);
+                TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
+                TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
+                TxBits_est=TxBits_est(:);
 
 
-        RxSymbol_est=symest(1:TxAntNum)+1j*symest(TxAntNum+1:end);
-        TxBits_est=qamdemod(RxSymbol_est,QAM,"gray","OutputType","bit","UnitAveragePower",true);
+        % RxSymbol_est=symest(1:TxAntNum)+1j*symest(TxAntNum+1:end);
+        % TxBits_est=qamdemod(RxSymbol_est,QAM,"gray","OutputType","bit","UnitAveragePower",true);
 
         err=nnz(TxBits_est-TxBits);
        

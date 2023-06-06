@@ -6,20 +6,20 @@ rand('state',114514);
 randn('state',114514);
 
 % profile on;
-EbN0db      =1000:3:1800;
+EbN0db      =0:3:30;
 SampleNum   = Inf;       % max sample no.
 delta       = 0.55; %0.55;          % damping factor
 isCorr = 0;
 rho = 0.3;  % related channel parameter
-max_frame   =10000;
+max_frame   =300;
 ModType 	= 4;
 
 kbestCount=0;
 
 
 % Detection Parameter Set
-TxAntNum    =8;
-RxAntNum    =8;
+TxAntNum    =16;
+RxAntNum    =16;
 iterNum     =10;% 7;        % iter no.
 N 			= 1; 						% Block length
 InfoLen 	= N * ModType * TxAntNum; 	% Information length
@@ -111,9 +111,10 @@ for nEN =1:length(EbN0db)
         %symest = MDPI_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         %symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         %symest = AltMin(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
-        % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+         % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
-        symest = fista(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
+        % symest = fista(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
+        % symest = stochastic(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
 
         %symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
@@ -130,13 +131,14 @@ for nEN =1:length(EbN0db)
 
 
         % QR for K_BEST
-        % [bQ, bR] = qr(Hreal);
-        % R = bR(1:2*TxAntNum, :);
-        % Q = bQ(:, 1:2*TxAntNum);
-        % z = Q' * RxSymbol;
+        [bQ, bR] = qr(Hreal);
+        R = bR(1:2*TxAntNum, :);
+        Q = bQ(:, 1:2*TxAntNum);
+        z = Q' * RxSymbol;
 
-%          [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
-       % symest=K_Best(R, sym', z,8);
+         % [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
+        symest=K_Best(R, sym', z,2);
+       % symest=MMSEKBEST(R, sym', z,2,TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,delta,iterNum);
 
         % 用那个祖传格雷码的时候用这4行
                 [~,indiceest]=min(abs(sym'-symest),[],2);
@@ -172,8 +174,8 @@ for nEN =1:length(EbN0db)
 end
 toc
 
-writeNPY(H_error,"./npy-matlab/H_error.npy")
-writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
-writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")
-writeNPY(bitsNum_error,"./npy-matlab/bitsNum_error.npy")
-writeNPY(matlabEst,"./npy-matlab/matlabEst.npy")
+% writeNPY(H_error,"./npy-matlab/H_error.npy")
+% writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
+% writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")
+% writeNPY(bitsNum_error,"./npy-matlab/bitsNum_error.npy")
+% writeNPY(matlabEst,"./npy-matlab/matlabEst.npy")

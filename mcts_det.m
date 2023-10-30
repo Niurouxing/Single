@@ -4,7 +4,7 @@ function [res,kbestCount,PEDCount] = mcts_det(R, sym, z,Nv,TxSymbol_real)
 
 %playout=ones(100,1)*30;
 playout=[40,10,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-cCut=1.2;    % 超参数
+cCut=1.0;    % 超参数
 maxPEDAllowed=1.5*Nv*length(R);
 maxRestart=5;
 

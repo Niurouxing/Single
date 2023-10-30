@@ -6,20 +6,20 @@ rand('state',114514);
 randn('state',114514);
 
 % profile on;
-EbN0db      =0:3:30;
-SampleNum   = Inf;       % max sample no.
-delta       = 0.55; %0.55;          % damping factor
+EbN0db      =25:1:35;
+SampleNum   = Inf;       % max sample no.aaa
+delta       = 0.5; %0.55;          % damping factor
 isCorr = 0;
 rho = 0.3;  % related channel parameter
-max_frame   =300;
-ModType 	= 4;
+max_frame   =1000;
+ModType 	= 6;
 
 kbestCount=0;
 
 
 % Detection Parameter Set
-TxAntNum    =16;
-RxAntNum    =16;
+TxAntNum    =5;
+RxAntNum    =7;
 iterNum     =10;% 7;        % iter no.
 N 			= 1; 						% Block length
 InfoLen 	= N * ModType * TxAntNum; 	% Information length
@@ -55,11 +55,7 @@ slen = length(sym);
 H           = zeros(2*RxAntNum,2*TxAntNum);
 RxSymbol    = zeros(2*RxAntNum,1); % Received
 
-H_error=[];
-Tx_error=[];
-bitsNum_error=[];
-Rx_error=[];
-matlabEst=[];
+
 tic
 for nEN =1:length(EbN0db)
 
@@ -79,6 +75,8 @@ for nEN =1:length(EbN0db)
         TxBits = randi([0, 1], [InfoLen, 1]);
         TxSymbol = GrayMapQAM(TxBits', ModType).';
         % TxSymbol=qammod(TxBits,QAM,"gray",'UnitAveragePower',true,'InputType','bit');
+        TxSymbol = GrayMapQAM(TxBits', ModType).';
+        % TxSymbol=qammod(TxBits,QAM,"gray",'UnitAveragePower',true,'InputType','bit');
         TxSymbol_real=[real(TxSymbol); imag(TxSymbol)];
         % Channel Matrix
         if isCorr
@@ -94,7 +92,7 @@ for nEN =1:length(EbN0db)
         [RxSymbol_c, Nv] = acwgn_EbN0(HMat*TxSymbol, 1, SNR, TxAntNum, RxAntNum, ModType, 1);	% Add Gaussian noise
 
         if (mod(loop,10) == 0)
-            fprintf("\nNow Iter: %d\tNow SNR: %d\tNow FER: %fNow BER: %f\tNow Error Frame: %d\tNow Error Bits: %d", ...
+            fprintf("\nNow Iter: %d\tNow SNR: %d\tNow FER: %fNow BER: %f\tNow Error Frame: %d \tNow Error Bits: %d", ...
                 loop, EbN0db(nEN), error_frame/loop, error_bits/loop/TxAntNum/ModType, error_frame, error_bits);
         end
 
@@ -104,17 +102,20 @@ for nEN =1:length(EbN0db)
         RxSymbol(1:RxAntNum,1)=real(RxSymbol_c);
         RxSymbol(RxAntNum+1:end,1)=imag(RxSymbol_c);
 
-        %symLLR = Bsp_b11_fast(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);[~,Indice] = max(symLLR);symest = sym(Indic
+        % symLLR = Bsp_b11_fast(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);[~,Indice] = max(symLLR);symest = sym(Indice);
 
-        %symest = RD_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        % symest = RD_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+
+        % symest = AMP(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        % symest= EP(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        % symest = GD(TxAntNum,RxAntNum,RxSymbol,Hreal,sym,iterNum,Nv);
 
         %symest = MDPI_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
-        %symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
+        symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         %symest = AltMin(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
-         % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
-
-        % symest = fista(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
-        % symest = stochastic(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
+        % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        % symest =NA(RxSymbol_c,HMat,Nv,sym,norm_f,TxSymbol);
+   
 
         %symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
@@ -126,21 +127,24 @@ for nEN =1:length(EbN0db)
         % symest =  Repeat_Bsp(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real,norm_f);
         % symLLR = RD_BsP_df1dm1_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);[~,Indice] = max(symLLR);symest = sym(Indice);
 
-        % DANGER!DANGER!
-        %symest=  maxlikehood(RxSymbol,Hreal,sym);
+         % DANGER!DANGER!
+%         symest=  maxlikehood(RxSymbol,Hreal,sym);
 
 
         % QR for K_BEST
-        [bQ, bR] = qr(Hreal);
-        R = bR(1:2*TxAntNum, :);
-        Q = bQ(:, 1:2*TxAntNum);
-        z = Q' * RxSymbol;
+        % [bQ, bR] = qr(Hreal);
+        % R = bR(1:2*TxAntNum, :);
+        % Q = bQ(:, 1:2*TxAntNum);
+        % z = Q' * RxSymbol;
 
-         % [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
-        symest=K_Best(R, sym', z,2);
-       % symest=MMSEKBEST(R, sym', z,2,TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,delta,iterNum);
+%          [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
+       % symest=K_Best(R, sym', z,128);
 
         % 用那个祖传格雷码的时候用这4行
+                [~,indiceest]=min(abs(sym'-symest),[],2);
+                TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
+                TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
+                TxBits_est=TxBits_est(:);
                 [~,indiceest]=min(abs(sym'-symest),[],2);
                 TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
                 TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
@@ -149,14 +153,16 @@ for nEN =1:length(EbN0db)
 
         % RxSymbol_est=symest(1:TxAntNum)+1j*symest(TxAntNum+1:end);
         % TxBits_est=qamdemod(RxSymbol_est,QAM,"gray","OutputType","bit","UnitAveragePower",true);
+        % RxSymbol_est=symest(1:TxAntNum)+1j*symest(TxAntNum+1:end);
+        % TxBits_est=qamdemod(RxSymbol_est,QAM,"gray","OutputType","bit","UnitAveragePower",true);
 
-        err=nnz(TxBits_est-TxBits);
+       err=nnz(TxBits_est-TxBits);
        
-            H_error=cat(3,H_error,Hreal);
-            Tx_error=[Tx_error,TxSymbol_real];
-            Rx_error=[Rx_error,RxSymbol];
-            bitsNum_error=[bitsNum_error;err];
-            matlabEst=[matlabEst,(Hreal'*Hreal+Nv*eye(2*TxAntNum)) \ Hreal'*RxSymbol];
+            % H_error=cat(3,H_error,Hreal);
+            % Tx_error=[Tx_error,TxSymbol_real];
+            % Rx_error=[Rx_error,RxSymbol];
+            % bitsNum_error=[bitsNum_error;err];
+            % matlabEst=[matlabEst,(Hreal'*Hreal+Nv*eye(2*TxAntNum)) \ Hreal'*RxSymbol];
 
 
         
@@ -174,6 +180,11 @@ for nEN =1:length(EbN0db)
 end
 toc
 
+% writeNPY(H_error,"./npy-matlab/H_error.npy")
+% writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
+% writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")
+% writeNPY(bitsNum_error,"./npy-matlab/bitsNum_error.npy")
+% writeNPY(matlabEst,"./npy-matlab/matlabEst.npy")
 % writeNPY(H_error,"./npy-matlab/H_error.npy")
 % writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
 % writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")

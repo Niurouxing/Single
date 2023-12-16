@@ -46,9 +46,9 @@ for loop=1:3
         Muz=H.*sym(index);
         
         % mean
-        Px=exp(alpha-max(alpha,[],3));
-        Px=Px./sum(Px,3);
-        Muz=H.*sum(Px.*symp,3);
+        % Px=exp(alpha-max(alpha,[],3));
+        % Px=Px./sum(Px,3);
+        % Muz=H.*sum(Px.*symp,3);
         % -----------------------------
         Muzji=sum(Muz,2)-Muz;
         

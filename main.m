@@ -6,21 +6,21 @@ rand('state',114514);
 randn('state',114514);
 
 % profile on;
-EbN0db      =25:1:35;
+EbN0db      =0:1:15;
 SampleNum   = Inf;       % max sample no.aaa
 delta       = 0.5; %0.55;          % damping factor
 isCorr = 0;
 rho = 0.3;  % related channel parameter
-max_frame   =1000;
-ModType 	= 6;
+max_frame   =2000;
+ModType 	= 4;
 
 kbestCount=0;
 
 
 % Detection Parameter Set
-TxAntNum    =5;
-RxAntNum    =7;
-iterNum     =10;% 7;        % iter no.
+TxAntNum    =64;
+RxAntNum    =64;
+iterNum     =3;% 7;        % iter no.
 N 			= 1; 						% Block length
 InfoLen 	= N * ModType * TxAntNum; 	% Information length
 
@@ -73,8 +73,7 @@ for nEN =1:length(EbN0db)
         loop = loop + 1;
 
         TxBits = randi([0, 1], [InfoLen, 1]);
-        TxSymbol = GrayMapQAM(TxBits', ModType).';
-        % TxSymbol=qammod(TxBits,QAM,"gray",'UnitAveragePower',true,'InputType','bit');
+
         TxSymbol = GrayMapQAM(TxBits', ModType).';
         % TxSymbol=qammod(TxBits,QAM,"gray",'UnitAveragePower',true,'InputType','bit');
         TxSymbol_real=[real(TxSymbol); imag(TxSymbol)];
@@ -107,17 +106,18 @@ for nEN =1:length(EbN0db)
         % symest = RD_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
         % symest = AMP(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
-        % symest= EP(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        symest= EP(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+        % symest= EPA(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         % symest = GD(TxAntNum,RxAntNum,RxSymbol,Hreal,sym,iterNum,Nv);
 
         %symest = MDPI_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
-        symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
+        % symest = test_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         %symest = AltMin(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         % symest =NA(RxSymbol_c,HMat,Nv,sym,norm_f,TxSymbol);
-   
 
-        %symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
+
+        % symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
 
         %symest =  Repeat_GAI(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real,norm_f);
         %symest =  Repeat_GAI_IDD(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real,norm_f);
@@ -127,8 +127,8 @@ for nEN =1:length(EbN0db)
         % symest =  Repeat_Bsp(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real,norm_f);
         % symLLR = RD_BsP_df1dm1_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);[~,Indice] = max(symLLR);symest = sym(Indice);
 
-         % DANGER!DANGER!
-%         symest=  maxlikehood(RxSymbol,Hreal,sym);
+        % DANGER!DANGER!
+                % symest=  maxlikehood(RxSymbol,Hreal,sym);
 
 
         % QR for K_BEST
@@ -137,18 +137,14 @@ for nEN =1:length(EbN0db)
         % Q = bQ(:, 1:2*TxAntNum);
         % z = Q' * RxSymbol;
 
-%          [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
-       % symest=K_Best(R, sym', z,128);
+                 % [symest,kbesttime,PEDtemp] =mcts_det(R, sym, z,Nv,TxSymbol_real); kbestCount=kbestCount+kbesttime;averagekbest=kbestCount/loop;PEDCount=[PEDCount;PEDtemp];
+        % symest=K_Best(R, sym', z,1024);
 
         % 用那个祖传格雷码的时候用这4行
-                [~,indiceest]=min(abs(sym'-symest),[],2);
-                TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
-                TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
-                TxBits_est=TxBits_est(:);
-                [~,indiceest]=min(abs(sym'-symest),[],2);
-                TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
-                TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
-                TxBits_est=TxBits_est(:);
+        [~,indiceest]=min(abs(sym'-symest),[],2);
+        TxBits_est=de2bi(indiceest-1,log2(size(sym,1)),'left-msb');
+        TxBits_est=[TxBits_est(1:TxAntNum,:) TxBits_est(TxAntNum+1:end,:)]';
+        TxBits_est=TxBits_est(:);
 
 
         % RxSymbol_est=symest(1:TxAntNum)+1j*symest(TxAntNum+1:end);
@@ -156,37 +152,16 @@ for nEN =1:length(EbN0db)
         % RxSymbol_est=symest(1:TxAntNum)+1j*symest(TxAntNum+1:end);
         % TxBits_est=qamdemod(RxSymbol_est,QAM,"gray","OutputType","bit","UnitAveragePower",true);
 
-       err=nnz(TxBits_est-TxBits);
-       
-            % H_error=cat(3,H_error,Hreal);
-            % Tx_error=[Tx_error,TxSymbol_real];
-            % Rx_error=[Rx_error,RxSymbol];
-            % bitsNum_error=[bitsNum_error;err];
-            % matlabEst=[matlabEst,(Hreal'*Hreal+Nv*eye(2*TxAntNum)) \ Hreal'*RxSymbol];
-
-
-        
-
-        
+        err=nnz(TxBits_est-TxBits);
         error_bits = error_bits + err;
         error_frame = error_frame + ~~err;
 
 
     end
-   
+
     BER(nEN) = error_bits / TxAntNum / ModType / loop;
     FER(nEN) = error_frame / loop;
 
 end
 toc
 
-% writeNPY(H_error,"./npy-matlab/H_error.npy")
-% writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
-% writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")
-% writeNPY(bitsNum_error,"./npy-matlab/bitsNum_error.npy")
-% writeNPY(matlabEst,"./npy-matlab/matlabEst.npy")
-% writeNPY(H_error,"./npy-matlab/H_error.npy")
-% writeNPY(Tx_error,"./npy-matlab/Tx_error.npy")
-% writeNPY(Rx_error,"./npy-matlab/Rx_error.npy")
-% writeNPY(bitsNum_error,"./npy-matlab/bitsNum_error.npy")
-% writeNPY(matlabEst,"./npy-matlab/matlabEst.npy")

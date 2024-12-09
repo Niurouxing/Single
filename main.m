@@ -6,20 +6,20 @@ rand('state',114514);
 randn('state',114514);
 
 % profile on;
-EbN0db      =31:3:40;
+EbN0db      =9:3:30;
 SampleNum   = Inf;       % max sample no.aaa
 delta       = 0.5; %0.55;          % damping factor
 isCorr = 0;
 rho = 0.3;  % related channel parameter
 max_frame   =100;
-ModType 	= 8;
+ModType 	= 6;
 
 kbestCount=0;
 
 
 % Detection Parameter Set
-TxAntNum    =128;
-RxAntNum    =128;
+TxAntNum    =32;
+RxAntNum    =32;
 iterNum     =5;% 7;        % iter no.
 N 			= 1; 						% Block length
 InfoLen 	= N * ModType * TxAntNum; 	% Information length
@@ -115,7 +115,8 @@ for nEN =1:length(EbN0db)
         %symest = AltMin(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum,TxSymbol_real);
         % symest = MMSE(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         % symest =NA(RxSymbol_c,HMat,Nv,sym,norm_f,TxSymbol);
-        [symest, visited_nodes, flops] = BFBB(TxAntNum, RxAntNum, Hreal, RxSymbol, sym, norm_f);
+        % [symest, visited_nodes, flops] = BFBB(TxAntNum, RxAntNum, Hreal, RxSymbol, sym, norm_f);
+        [symest, CC_mnsd, average_K] = MNSD(TxAntNum, RxSymbol, Hreal, Nv, sym',TxSymbol_real);
 
         % symest = FC_GAI_BP_Det(TxAntNum,RxAntNum,slen,RxSymbol,Hreal,Nv,sym,delta,iterNum);
         % [symest, CC] = FCSD(2*TxAntNum, Hreal, RxSymbol,sym, 3);

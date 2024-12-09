@@ -7,14 +7,14 @@ function [symest, visited_nodes, flops] = BFBB(TxAntNum, RxAntNum, Hreal, RxSymb
 
  L=16;
  M=2;
- alpha=0.3;
+ alpha=0.0001;
 
 visited_nodes = 0; %Number of visited nodes in the tree each detection process
 flops = 0;   %Number of operations
 
 %###################### Problem formulation ###############################
-Q =  Hreal'*Hreal;                                                              flops = flops + 8*TxAntNum^2*RxAntNum;
-b = -Hreal'*(RxSymbol/norm_f + (length(sym)-1)*Hreal*ones(2*TxAntNum,1))/2;     flops = flops + 8*TxAntNum*RxAntNum;
+Q =  Hreal'*Hreal;                                                            %  flops = flops + 8*TxAntNum^2*RxAntNum;
+b = -Hreal'*(RxSymbol/norm_f + (length(sym)-1)*Hreal*ones(2*TxAntNum,1))/2;   %  flops = flops + 8*TxAntNum*RxAntNum;
 
 % Initial box-constraint condition
 lb0 = zeros(size(b)); 
@@ -72,7 +72,7 @@ while(l<L)
             fval_set = [fval_set; fval_star];
             remain_idx = [remain_idx; m];
             Solutions_container(m,1) = {z_star};
-            Solutions_container(m,4) = {};
+            Solutions_container(m,4) = {[]};
         end
     end
 
@@ -97,15 +97,17 @@ while(l<L)
     else
         [~, idx] = sort(fval_set);
         while(size(new_solcontner, 1)<M)
-            lb = cell2mat(Solutions_container(remain_idx(idx(j)),2));
-            ub = cell2mat(Solutions_container(remain_idx(idx(j)),3));
-            i = cell2mat(Solutions_container(remain_idx(idx(j)),4));
+        for j=1:length(remain_idx)
+            lb = cell2mat(Solutions_container(remain_idx(j),2));
+            ub = cell2mat(Solutions_container(remain_idx(j),3));
+            i = cell2mat(Solutions_container(remain_idx(j),4));
             lb_temp = lb;
             ub_temp = ub;
             lb_temp(i) = min(ceil(z_star(i)), ub(i));
             ub_temp(i) = max(floor(z_star(i)), lb(i));
             new_solcontner = [new_solcontner; {{}, lb_temp, ub0, {}}];
             new_solcontner = [new_solcontner; {{}, lb0, ub_temp, {}}];
+        end
         end
     end
     Solutions_container = new_solcontner;
